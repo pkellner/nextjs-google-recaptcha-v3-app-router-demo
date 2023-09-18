@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import axios from "axios";
+import GoogleCaptchaWrapper from "@/app/google-captcha-wrapper";
 
-import GoogleCaptchaWrapper from "./google-captcha-wrapper";
+interface PostData {
+  gRecaptchaToken: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  hearFromSponsors: boolean;
+}
 
 export default function Home() {
   return (
@@ -15,10 +22,11 @@ export default function Home() {
 }
 
 function HomeInside() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [notification, setNotification] = useState("");
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [hearFromSponsors, setHearFromSponsors] = useState(false);
+  const [notification, setNotification] = useState('');
 
   const { executeRecaptcha } = useGoogleReCaptcha();
 
@@ -36,15 +44,16 @@ function HomeInside() {
     });
   };
 
-  const submitEnquiryForm = (gReCaptchaToken) => {
+  const submitEnquiryForm = (gReCaptchaToken : string) => {
     async function goAsync() {
       const response = await axios({
         method: "post",
         url: "/api/contactFormSubmit",
         data: {
-          name: name,
+          firstName: firstName,
+          lastName: lastName,
           email: email,
-          message: message,
+          hearFromSponsors: hearFromSponsors,
           gRecaptchaToken: gReCaptchaToken,
         },
         headers: {
@@ -52,6 +61,7 @@ function HomeInside() {
           "Content-Type": "application/json",
         },
       });
+
 
       if (response?.data?.success === true) {
         setNotification(`Success with score: ${response?.data?.score}`);
@@ -65,16 +75,26 @@ function HomeInside() {
   return (
     <div className="container">
       <main className="mt-5"> {/* Add a top margin for better spacing */}
-        <h2>Enquiry Form</h2>
+        <h2>Interested in Silicon Valley Code Camp</h2>
         <form onSubmit={handleSubmitForm}>
           <div className="mb-3">
             <input
               type="text"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e?.target?.value)}
+              name="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e?.target?.value)}
               className="form-control"
-              placeholder="Name"
+              placeholder="First Name"
+            />
+          </div>
+          <div className="mb-3">
+            <input
+              type="text"
+              name="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e?.target?.value)}
+              className="form-control"
+              placeholder="Last Name"
             />
           </div>
           <div className="mb-3">
@@ -84,25 +104,23 @@ function HomeInside() {
               value={email}
               onChange={(e) => setEmail(e?.target?.value)}
               className="form-control"
-              placeholder="Email"
+              placeholder="Email Address"
             />
           </div>
-          <div className="mb-3">
-        <textarea
-          rows={3}
-          name="message"
-          value={message}
-          onChange={(e) => setMessage(e?.target?.value)}
-          className="form-control"
-          placeholder="Message"
-        />
+          <div className="mb-3 form-check">
+            <input
+              type="checkbox"
+              name="hearFromSponsors"
+              checked={hearFromSponsors}
+              onChange={(e) => setHearFromSponsors(e?.target?.checked)}
+              className="form-check-input"
+            />
+            <label className="form-check-label">Hear from our sponsors</label>
           </div>
           <button type="submit" className="btn btn-light">Submit</button>
-
           {notification && <p className="mt-3 text-info">{notification}</p>}
         </form>
       </main>
     </div>
-
   );
 }
